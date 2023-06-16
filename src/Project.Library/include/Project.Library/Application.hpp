@@ -20,6 +20,9 @@ protected:
     virtual void RenderUI();
     virtual void Update();
 
+    static constexpr unsigned int windowWidth = 1920;
+    static constexpr unsigned int windowHeight = 1080;
+
 private:
     GLFWwindow* _windowHandle = nullptr;
     void Render();

@@ -13,4 +13,4 @@ find_package(OpenGL REQUIRED)
 
 target_include_directories(Project.Library PUBLIC include)
 
-target_link_libraries(Project.Library PRIVATE glfw glad glm TracyClient spdlog imgui)
+target_link_libraries(Project.Library PRIVATE fwog glfw glad glm TracyClient spdlog imgui)

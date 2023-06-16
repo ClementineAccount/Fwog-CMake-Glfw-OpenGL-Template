@@ -10,60 +10,81 @@
 #include <string_view>
 #include <vector>
 #include <memory>
+#include <array>
+#include <optional>
 
-struct Vertex
-{
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 Uv;
-    glm::vec4 Tangent;
-};
+//Fwog Stuff
 
-struct MeshIndirectInfo
-{
-    uint32_t Count;
-    uint32_t InstanceCount;
-    uint32_t FirstIndex;
-    int32_t BaseVertex;
-    uint32_t BaseInstance;
-};
+#include <Fwog/BasicTypes.h>
+#include <Fwog/Buffer.h>
+#include <Fwog/Pipeline.h>
+#include <Fwog/Rendering.h>
+#include <Fwog/Shader.h>
+#include <Fwog/Texture.h>
 
-struct MeshCreateInfo
-{
-    std::vector<Vertex> Vertices;
-    std::vector<uint32_t> Indices;
-    uint32_t TransformIndex;
-    uint32_t BaseColorTexture;
-    uint32_t NormalTexture;
-    size_t VertexOffset;
-    size_t IndexOffset;
-    uint32_t VertexBuffer;
-    uint32_t IndexBuffer;
-};
 
-struct Mesh
+namespace Primitives
 {
-    uint32_t IndexCount = 0;
-    int32_t VertexOffset = 0;
-    uint32_t indexOffset = 0;
-    // NOT OpenGL handles, just indices
-    uint32_t TransformIndex = 0;
-    uint32_t BaseColorTexture = 0;
-    uint32_t NormalTexture = 0;
-};
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 uv;
+    };
 
-struct Model
-{
-    std::vector<Mesh> Meshes;
-    std::vector<uint32_t> Textures;
-    std::vector<glm::mat4> Transforms;
-    uint32_t InputLayout;
-    uint32_t VertexBuffer;
-    uint32_t IndexBuffer;
-    std::vector<uint32_t> Commands;
-    std::vector<uint32_t> ObjectData;
-    uint32_t TransformData;
-};
+    // Took it from fwog's examples 02_deferred.cpp
+    static constexpr std::array<Vertex, 24> cubeVertices{
+        // front (+z)
+        Vertex{{-0.5, -0.5, 0.5}, {0, 0, 1}, {0, 0}},
+        {{0.5, -0.5, 0.5}, {0, 0, 1}, {1, 0}},
+        {{0.5, 0.5, 0.5}, {0, 0, 1}, {1, 1}},
+        {{-0.5, 0.5, 0.5}, {0, 0, 1}, {0, 1}},
+
+        // back (-z)
+        {{-0.5, 0.5, -0.5}, {0, 0, -1}, {1, 1}},
+        {{0.5, 0.5, -0.5}, {0, 0, -1}, {0, 1}},
+        {{0.5, -0.5, -0.5}, {0, 0, -1}, {0, 0}},
+        {{-0.5, -0.5, -0.5}, {0, 0, -1}, {1, 0}},
+
+        // left (-x)
+        {{-0.5, -0.5, -0.5}, {-1, 0, 0}, {0, 0}},
+        {{-0.5, -0.5, 0.5}, {-1, 0, 0}, {1, 0}},
+        {{-0.5, 0.5, 0.5}, {-1, 0, 0}, {1, 1}},
+        {{-0.5, 0.5, -0.5}, {-1, 0, 0}, {0, 1}},
+
+        // right (+x)
+        {{0.5, 0.5, -0.5}, {1, 0, 0}, {1, 1}},
+        {{0.5, 0.5, 0.5}, {1, 0, 0}, {0, 1}},
+        {{0.5, -0.5, 0.5}, {1, 0, 0}, {0, 0}},
+        {{0.5, -0.5, -0.5}, {1, 0, 0}, {1, 0}},
+
+        // top (+y)
+        {{-0.5, 0.5, 0.5}, {0, 1, 0}, {0, 0}},
+        {{0.5, 0.5, 0.5}, {0, 1, 0}, {1, 0}},
+        {{0.5, 0.5, -0.5}, {0, 1, 0}, {1, 1}},
+        {{-0.5, 0.5, -0.5}, {0, 1, 0}, {0, 1}},
+
+        // bottom (-y)
+        {{-0.5, -0.5, -0.5}, {0, -1, 0}, {0, 0}},
+        {{0.5, -0.5, -0.5}, {0, -1, 0}, {1, 0}},
+        {{0.5, -0.5, 0.5}, {0, -1, 0}, {1, 1}},
+        {{-0.5, -0.5, 0.5}, {0, -1, 0}, {0, 1}},
+    };
+
+    static constexpr std::array<uint32_t, 36> cubeIndices{
+        0,  1,  2,  2,  3,  0,
+
+        4,  5,  6,  6,  7,  4,
+
+        8,  9,  10, 10, 11, 8,
+
+        12, 13, 14, 14, 15, 12,
+
+        16, 17, 18, 18, 19, 16,
+
+        20, 21, 22, 22, 23, 20,
+    };
+}
+
 
 class ProjectApplication final : public Application
 {
@@ -76,11 +97,25 @@ protected:
     void Update() override;
 
 private:
-    Model _cubes;
-    uint32_t _shaderProgram;
-
-
-
+    uint32_t shaderProgram;
     bool MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath);
     void LoadModel(std::string_view filePath);
+
+
+    struct GlobalUniforms {
+        glm::mat4 viewProj;
+        glm::vec3 eyePos;
+    };
+
+    struct DrawObject
+    {
+        glm::mat4 modelMat = glm::mat4(1.0f);
+        std::optional<Fwog::Buffer> vertexBuffer;
+        std::optional<Fwog::Buffer> indexBuffer;
+    };
+
+    std::optional<Fwog::GraphicsPipeline> pipeline_textured;
+    std::optional<Fwog::TypedBuffer<GlobalUniforms>> globalUniformsBuffer;
+
+    DrawObject exampleCube;
 };

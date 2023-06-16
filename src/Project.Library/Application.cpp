@@ -74,9 +74,6 @@ bool Application::Initialize()
     const auto primaryMonitor = glfwGetPrimaryMonitor();
     const auto primaryMonitorVideoMode = glfwGetVideoMode(primaryMonitor);
 
-    constexpr int windowWidth = 1920;
-    constexpr int windowHeight = 1080;
-
     _windowHandle = glfwCreateWindow(windowWidth, windowHeight, "Project Template", nullptr, nullptr);
     if (_windowHandle == nullptr)
     {
@@ -91,6 +88,8 @@ bool Application::Initialize()
 
     glfwMakeContextCurrent(_windowHandle);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
+    Fwog::Initialize();
 
     ImGui::CreateContext();
     AfterCreatedUiContext();
