@@ -10,6 +10,8 @@
 #include <tracy/Tracy.hpp>
 #include <tracy/TracyOpenGL.hpp>
 
+#include <Fwog/Context.h>
+
 #include <iostream>
 #include <string>
 
