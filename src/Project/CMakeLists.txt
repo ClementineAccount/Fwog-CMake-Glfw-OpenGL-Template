@@ -13,4 +13,4 @@ add_dependencies(Project copy_data)
 
 target_include_directories(Project PRIVATE include)
 
-target_link_libraries(Project PRIVATE glad glfw imgui glm cgltf stb_image spdlog Project.Library)
+target_link_libraries(Project PRIVATE fwog glad glfw imgui glm cgltf stb_image spdlog Project.Library)

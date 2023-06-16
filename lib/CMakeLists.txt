@@ -98,6 +98,21 @@ endif()
 
 #----------------------------------------------------------------------
 
+
+#----------------------------------------------------------------------
+
+set(FWOG_BUILD_EXAMPLES false)
+FetchContent_Declare(
+    fwog
+    GIT_REPOSITORY https://github.com/JuanDiegoMontoya/Fwog.git
+    GIT_TAG        v0.1.1
+)
+message("Fetching fwog")
+FetchContent_MakeAvailable(fwog)
+
+#----------------------------------------------------------------------
+
+
 FetchContent_Declare(
     stb_image
     GIT_REPOSITORY  https://github.com/nothings/stb.git
