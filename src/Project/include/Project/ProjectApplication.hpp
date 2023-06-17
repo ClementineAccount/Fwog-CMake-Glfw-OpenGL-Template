@@ -31,6 +31,8 @@ namespace Primitives
         glm::vec2 uv;
     };
 
+    using indexType =  uint32_t;
+
     // Took it from fwog's examples 02_deferred.cpp
     static constexpr std::array<Vertex, 24> cubeVertices{
         // front (+z)
@@ -70,7 +72,7 @@ namespace Primitives
         {{-0.5, -0.5, 0.5}, {0, -1, 0}, {0, 1}},
     };
 
-    static constexpr std::array<uint32_t, 36> cubeIndices{
+    static constexpr std::array<indexType, 36> cubeIndices{
         0,  1,  2,  2,  3,  0,
 
         4,  5,  6,  6,  7,  4,
@@ -90,11 +92,19 @@ struct DrawObject
     //T1 and T2 can be different container types. std::array or std::vector.
     //Didn't want this to be a constructor because the actual DrawObject struct does not need to be templated.
     template <typename T1, typename T2>
-    static DrawObject Init(T1 const& vertexList, T2 const& indexList);
+    static DrawObject Init(T1 const& vertexList, T2 const& indexList, size_t indexCount);
 
     std::optional<Fwog::Buffer> vertexBuffer;
     std::optional<Fwog::Buffer> indexBuffer;
-    glm::mat4 modelMat = glm::mat4(1.0f);
+
+    uint32_t indexCount;
+
+    struct ObjectUniform
+    {
+        glm::mat4 modelTransform = glm::mat4(1.0f);
+    };
+
+    std::optional<Fwog::TypedBuffer<ObjectUniform>> modelUniformBuffer;
 };
 
 

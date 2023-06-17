@@ -62,11 +62,16 @@ static std::string FindTexturePath(const fs::path& basePath, const cgltf_image* 
 
 
 template <typename T1, typename T2>
-DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList)
+DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList, size_t indexCount)
 {
     DrawObject object;
     object.vertexBuffer.emplace(vertexList);
     object.indexBuffer.emplace(indexList);
+    object.modelUniformBuffer =  Fwog::TypedBuffer<ObjectUniforms>(Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
+
+    //Fwog takes in uint32_t for the indexCount but .size() on a container returns size_t. I'll just cast it here and hope its fine.
+    object.indexCount = static_cast<uint32_t>(indexCount);
+    
     return object;
 }
 
@@ -94,8 +99,10 @@ bool ProjectApplication::Load()
     {
         //https://en.cppreference.com/w/cpp/language/class_template_argument_deduction 
         //because the containers which are the parameters are constexpr
-        exampleCubes[i] = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices);
+        exampleCubes[i] = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices, Primitives::cubeIndices.size());
     }
+
+    //To Do: load the texture too
 
 
     return true;
@@ -121,6 +128,19 @@ void ProjectApplication::RenderScene()
         .clearColorValue = {0.0f, 0.0f, 0.0f, 1.0f},
         .depthLoadOp = Fwog::AttachmentLoadOp::CLEAR,
         .clearDepthValue = 1.0f});
+
+    //Could refactor this to be a function of a class
+    auto drawObject = [&](DrawObject const& object, Fwog::Texture const& textureAlbedo, Fwog::Sampler const& sampler)
+    {
+        Fwog::Cmd::BindGraphicsPipeline(pipelineTextured.value());
+        Fwog::Cmd::BindUniformBuffer(0, globalUniformsBuffer.value());
+        Fwog::Cmd::BindUniformBuffer(1, object.modelUniformBuffer.value());
+
+        Fwog::Cmd::BindSampledImage(0, textureAlbedo, sampler);
+        Fwog::Cmd::BindVertexBuffer(0, object.vertexBuffer.value(), 0, sizeof(Primitives::Vertex));
+        Fwog::Cmd::BindIndexBuffer(object.indexBuffer.value(), Fwog::IndexType::UNSIGNED_INT);
+        Fwog::Cmd::DrawIndexed(object.indexCount, 1, 0, 0, 0);
+    };
 
 
     Fwog::EndRendering();

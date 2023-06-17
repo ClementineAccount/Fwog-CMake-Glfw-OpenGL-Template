@@ -18,7 +18,6 @@ layout(binding = 0, std140) uniform UBO0
 layout(binding = 1, std140) uniform UBO1
 {
   mat4 model;
-  vec4 color;
 };
 
 void main()
