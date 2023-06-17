@@ -23,6 +23,8 @@
 #include <queue>
 #include <set>
 
+static constexpr float PI = 3.1415926f;
+
 static std::string Slurp(std::string_view path)
 {
     std::ifstream file(path.data(), std::ios::ate);
@@ -119,6 +121,32 @@ void ProjectApplication::BeforeDestroyUiContext()
 
 }
 
+Camera ProjectApplication::MakeCamera()
+{
+    Camera camera;
+
+    static constexpr float nearPlane = 0.01f;
+    static constexpr float farPlane = 5000.0f;
+
+    static glm::vec3 camPos = glm::vec3(3.0f, 3.0f, 3.0f);
+    static glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
+    static glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    static glm::mat4 view = glm::lookAt(camPos, origin, up);
+    static glm::mat4 proj =
+        glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
+    static glm::mat4 viewProj = proj * view;
+
+    camera.globalStruct.viewProj = viewProj;
+    camera.globalStruct.eyePos = camPos;
+    camera.globalUniformsBuffer = Fwog::TypedBuffer<Camera::GlobalUniforms>(
+        Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
+
+    camera.globalUniformsBuffer.value().SubData(camera.globalStruct, 0);
+    //globalUniformsBuffer_skybox.value().SubData(globalStruct, 0);
+
+    return camera;
+}
+
 
 bool ProjectApplication::Load()
 {
@@ -137,6 +165,8 @@ bool ProjectApplication::Load()
     }
 
     cubeTexture = MakeTexture("./data/textures/fwog_logo.png");
+        
+    camera = MakeCamera();
 
     return true;
 }
@@ -179,7 +209,7 @@ void ProjectApplication::RenderScene()
     auto drawObject = [&](DrawObject const& object, Fwog::Texture const& textureAlbedo, Fwog::Sampler const& sampler)
     {
         Fwog::Cmd::BindGraphicsPipeline(pipelineTextured.value());
-        Fwog::Cmd::BindUniformBuffer(0, globalUniformsBuffer.value());
+        Fwog::Cmd::BindUniformBuffer(0, camera.value().globalUniformsBuffer.value());
         Fwog::Cmd::BindUniformBuffer(1, object.modelUniformBuffer.value());
 
         Fwog::Cmd::BindSampledImage(0, textureAlbedo, sampler);
