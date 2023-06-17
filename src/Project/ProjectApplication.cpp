@@ -60,6 +60,18 @@ static std::string FindTexturePath(const fs::path& basePath, const cgltf_image* 
     return texturePath;
 }
 
+
+template <typename T1, typename T2>
+DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList)
+{
+    DrawObject object;
+    object.vertexBuffer.emplace(vertexList);
+    object.indexBuffer.emplace(indexList);
+    return object;
+}
+
+
+
 void ProjectApplication::AfterCreatedUiContext()
 {
 }
@@ -80,6 +92,9 @@ bool ProjectApplication::Load()
     {
         return false;
     }
+
+    //https://en.cppreference.com/w/cpp/language/class_template_argument_deduction because parameters are constexpr
+    exampleCube = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices);
 
     return true;
 }
@@ -104,6 +119,9 @@ void ProjectApplication::RenderScene()
         .clearColorValue = {0.0f, 0.0f, 0.0f, 1.0f},
         .depthLoadOp = Fwog::AttachmentLoadOp::CLEAR,
         .clearDepthValue = 1.0f});
+
+
+
 
     Fwog::EndRendering();
 

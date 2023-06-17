@@ -85,6 +85,18 @@ namespace Primitives
     };
 }
 
+struct DrawObject
+{
+    //T1 and T2 can be different container types. std::array or std::vector.
+    //Didn't want this to be a constructor because the actual DrawObject struct does not need to be templated.
+    template <typename T1, typename T2>
+    static DrawObject Init(T1 const& vertexList, T2 const& indexList);
+
+    std::optional<Fwog::Buffer> vertexBuffer;
+    std::optional<Fwog::Buffer> indexBuffer;
+    glm::mat4 modelMat = glm::mat4(1.0f);
+};
+
 
 class ProjectApplication final : public Application
 {
@@ -99,22 +111,14 @@ protected:
 private:
     uint32_t shaderProgram;
     bool MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath);
-    void LoadModel(std::string_view filePath);
-
 
     struct GlobalUniforms {
         glm::mat4 viewProj;
         glm::vec3 eyePos;
     };
 
-    struct DrawObject
-    {
-        glm::mat4 modelMat = glm::mat4(1.0f);
-        std::optional<Fwog::Buffer> vertexBuffer;
-        std::optional<Fwog::Buffer> indexBuffer;
-    };
 
-    std::optional<Fwog::GraphicsPipeline> pipeline_textured;
+    std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::TypedBuffer<GlobalUniforms>> globalUniformsBuffer;
 
     DrawObject exampleCube;
