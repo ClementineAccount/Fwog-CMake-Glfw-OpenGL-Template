@@ -109,8 +109,11 @@ protected:
     void Update() override;
 
 private:
-    uint32_t shaderProgram;
-    bool MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath);
+    //uint32_t shaderProgram;
+    //bool MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath);
+
+    Fwog::GraphicsPipeline MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
+
 
     struct GlobalUniforms {
         glm::mat4 viewProj;
@@ -121,5 +124,6 @@ private:
     std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::TypedBuffer<GlobalUniforms>> globalUniformsBuffer;
 
-    DrawObject exampleCube;
+    static constexpr size_t numCubes = 2;
+    DrawObject exampleCubes[numCubes];
 };

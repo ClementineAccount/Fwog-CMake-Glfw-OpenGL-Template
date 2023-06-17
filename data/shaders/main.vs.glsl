@@ -9,7 +9,6 @@ layout(location = 2) out vec2 v_uv;
 layout(location = 3) out vec3 v_eye;
 layout(location = 4) out vec3 v_position;
 
-
 layout(binding = 0, std140) uniform UBO0
 {
   mat4 viewProj;

@@ -80,6 +80,7 @@ void ProjectApplication::BeforeDestroyUiContext()
 {
 }
 
+
 bool ProjectApplication::Load()
 {
     if (!Application::Load())
@@ -88,13 +89,14 @@ bool ProjectApplication::Load()
         return false;
     }
 
-    if (!MakeShader("./data/shaders/main.vs.glsl", "./data/shaders/main.fs.glsl"))
+    pipelineTextured = MakePipeline("./data/shaders/main.vs.glsl", "./data/shaders/main.fs.glsl");
+    for (size_t i = 0; i < numCubes; ++i)
     {
-        return false;
+        //https://en.cppreference.com/w/cpp/language/class_template_argument_deduction 
+        //because the containers which are the parameters are constexpr
+        exampleCubes[i] = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices);
     }
 
-    //https://en.cppreference.com/w/cpp/language/class_template_argument_deduction because parameters are constexpr
-    exampleCube = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices);
 
     return true;
 }
@@ -121,8 +123,6 @@ void ProjectApplication::RenderScene()
         .clearDepthValue = 1.0f});
 
 
-
-
     Fwog::EndRendering();
 
 }
@@ -138,52 +138,106 @@ void ProjectApplication::RenderUI()
     ImGui::ShowDemoWindow();
 }
 
-bool ProjectApplication::MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath)
+
+Fwog::GraphicsPipeline ProjectApplication::MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
 {
-    int success = false;
-    char log[1024] = {};
-    const auto vertexShaderSource = Slurp(vertexShaderFilePath);
-    const char* vertexShaderSourcePtr = vertexShaderSource.c_str();
-    const auto vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSourcePtr, nullptr);
-    glCompileShader(vertexShader);
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
+    auto LoadFile = [](std::string_view path)
     {
-        glGetShaderInfoLog(vertexShader, 1024, nullptr, log);
-        spdlog::error(log);
-        return false;
-    }
+        std::ifstream file{ path.data() };
+        std::string returnString { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+        return returnString;
+    };
 
-    const auto fragmentShaderSource = Slurp(fragmentShaderFilePath);
-    const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
-    const auto fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSourcePtr, nullptr);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 1024, nullptr, log);
-        spdlog::error(log);
-        return false;
-    }
+    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
+    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
 
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 1024, nullptr, log);
-        spdlog::error(log);
+    //Ensures this matches the shader and your vertex buffer data type
 
-        return false;
-    }
+    static constexpr auto sceneInputBindingDescs = std::array{
+        Fwog::VertexInputBindingDescription{
+            // position
+            .location = 0,
+            .binding = 0,
+            .format = Fwog::Format::R32G32B32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, position),
+    },
+    Fwog::VertexInputBindingDescription{
+            // normal
+            .location = 1,
+            .binding = 0,
+            .format = Fwog::Format::R32G32B32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, normal),
+    },
+    Fwog::VertexInputBindingDescription{
+            // texcoord
+            .location = 2,
+            .binding = 0,
+            .format = Fwog::Format::R32G32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, uv),
+    },
+    };
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    auto inputDescs = sceneInputBindingDescs;
+    auto primDescs =
+        Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
 
-    return true;
+    return Fwog::GraphicsPipeline{{
+            .vertexShader = &vertexShader,
+            .fragmentShader = &fragmentShader,
+            .inputAssemblyState = primDescs,
+            .vertexInputState = {inputDescs},
+            .depthState = {.depthTestEnable = true,
+            .depthWriteEnable = true,
+            .depthCompareOp = Fwog::CompareOp::LESS},
+        }};
 }
 
+//bool ProjectApplication::MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath)
+//{
+//    int success = false;
+//    char log[1024] = {};
+//    const auto vertexShaderSource = Slurp(vertexShaderFilePath);
+//    const char* vertexShaderSourcePtr = vertexShaderSource.c_str();
+//    const auto vertexShader = glCreateShader(GL_VERTEX_SHADER);
+//    glShaderSource(vertexShader, 1, &vertexShaderSourcePtr, nullptr);
+//    glCompileShader(vertexShader);
+//    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+//    if (!success)
+//    {
+//        glGetShaderInfoLog(vertexShader, 1024, nullptr, log);
+//        spdlog::error(log);
+//        return false;
+//    }
+//
+//    const auto fragmentShaderSource = Slurp(fragmentShaderFilePath);
+//    const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
+//    const auto fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+//    glShaderSource(fragmentShader, 1, &fragmentShaderSourcePtr, nullptr);
+//    glCompileShader(fragmentShader);
+//    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+//    if (!success)
+//    {
+//        glGetShaderInfoLog(fragmentShader, 1024, nullptr, log);
+//        spdlog::error(log);
+//        return false;
+//    }
+//
+//    shaderProgram = glCreateProgram();
+//    glAttachShader(shaderProgram, vertexShader);
+//    glAttachShader(shaderProgram, fragmentShader);
+//    glLinkProgram(shaderProgram);
+//    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+//    if (!success)
+//    {
+//        glGetProgramInfoLog(shaderProgram, 1024, nullptr, log);
+//        spdlog::error(log);
+//
+//        return false;
+//    }
+//
+//    glDeleteShader(vertexShader);
+//    glDeleteShader(fragmentShader);
+//
+//    return true;
+//}
+//
