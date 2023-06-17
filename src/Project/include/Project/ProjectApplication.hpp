@@ -124,6 +124,9 @@ private:
 
     Fwog::GraphicsPipeline MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
 
+    //Using stbi_load
+    Fwog::Texture MakeTexture(std::string_view texturePath, int32_t expectedChannels = 4);
+
 
     struct GlobalUniforms {
         glm::mat4 viewProj;
@@ -133,6 +136,8 @@ private:
 
     std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::TypedBuffer<GlobalUniforms>> globalUniformsBuffer;
+
+    std::optional<Fwog::Texture> cubeTexture;
 
     static constexpr size_t numCubes = 2;
     DrawObject exampleCubes[numCubes];
