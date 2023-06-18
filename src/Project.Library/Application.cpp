@@ -140,13 +140,17 @@ void Application::Render()
 {
     ZoneScopedC(tracy::Color::Red2);
 
+    glEnable(GL_FRAMEBUFFER_SRGB);
     RenderScene();
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     {
         RenderUI();
         ImGui::Render();
+        glDisable(GL_FRAMEBUFFER_SRGB);
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         ImGui::EndFrame();
     }
@@ -156,6 +160,8 @@ void Application::Render()
 
 void Application::RenderScene()
 {
+
+
 }
 
 void Application::RenderUI()

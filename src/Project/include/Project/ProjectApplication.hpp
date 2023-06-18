@@ -103,6 +103,7 @@ struct DrawObject
     {
         glm::mat4 modelTransform = glm::mat4(1.0f);
     };
+    ObjectUniform objectStruct;
 
     std::optional<Fwog::TypedBuffer<ObjectUniform>> modelUniformBuffer;
 };
@@ -110,13 +111,13 @@ struct DrawObject
 struct Camera
 {
     //To Do: Rename this from 'global' to camera stuff. Its just called that because the Fwog Examples did.
-    struct GlobalUniforms {
+    struct CameraUniforms {
         glm::mat4 viewProj;
         glm::vec3 eyePos;
     };
 
-    GlobalUniforms globalStruct;
-    std::optional<Fwog::TypedBuffer<GlobalUniforms>> globalUniformsBuffer;
+    CameraUniforms cameraStruct;
+    std::optional<Fwog::TypedBuffer<CameraUniforms>> cameraUniformsBuffer;
 };
 
 class ProjectApplication final : public Application
@@ -142,7 +143,7 @@ private:
 
     std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::Texture> cubeTexture;
-    std::optional<Camera> camera;
+    std::optional<Camera> sceneCamera;
 
     static constexpr size_t numCubes = 2;
     DrawObject exampleCubes[numCubes];

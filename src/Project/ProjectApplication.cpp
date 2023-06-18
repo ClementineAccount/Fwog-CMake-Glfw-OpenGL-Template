@@ -70,6 +70,7 @@ DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList, size_t in
     object.vertexBuffer.emplace(vertexList);
     object.indexBuffer.emplace(indexList);
     object.modelUniformBuffer =  Fwog::TypedBuffer<DrawObject::ObjectUniform>(Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
+    object.modelUniformBuffer.value().SubData(object.objectStruct, 0);
 
     //Fwog takes in uint32_t for the indexCount but .size() on a container returns size_t. I'll just cast it here and hope its fine.
     object.indexCount = static_cast<uint32_t>(indexCount);
@@ -136,12 +137,12 @@ Camera ProjectApplication::MakeCamera()
         glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
     static glm::mat4 viewProj = proj * view;
 
-    camera.globalStruct.viewProj = viewProj;
-    camera.globalStruct.eyePos = camPos;
-    camera.globalUniformsBuffer = Fwog::TypedBuffer<Camera::GlobalUniforms>(
+    camera.cameraStruct.viewProj = viewProj;
+    camera.cameraStruct.eyePos = camPos;
+    camera.cameraUniformsBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
         Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
 
-    camera.globalUniformsBuffer.value().SubData(camera.globalStruct, 0);
+    camera.cameraUniformsBuffer.value().SubData(camera.cameraStruct, 0);
     //globalUniformsBuffer_skybox.value().SubData(globalStruct, 0);
 
     return camera;
@@ -166,7 +167,7 @@ bool ProjectApplication::Load()
 
     cubeTexture = MakeTexture("./data/textures/fwog_logo.png");
         
-    camera = MakeCamera();
+    sceneCamera = MakeCamera();
 
     return true;
 }
@@ -184,6 +185,8 @@ void ProjectApplication::Update()
 
 void ProjectApplication::RenderScene()
 {
+
+    static constexpr glm::vec4 backgroundColor = glm::vec4(0.1f, 0.3f, 0.2f, 1.0f);
     Fwog::BeginSwapchainRendering(Fwog::SwapchainRenderInfo{
         .viewport =
         Fwog::Viewport{.drawRect{.offset = {0, 0},
@@ -191,7 +194,7 @@ void ProjectApplication::RenderScene()
         .minDepth = 0.0f,
         .maxDepth = 1.0f},
         .colorLoadOp = Fwog::AttachmentLoadOp::CLEAR,
-        .clearColorValue = {0.0f, 0.0f, 0.0f, 1.0f},
+        .clearColorValue = {backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a},
         .depthLoadOp = Fwog::AttachmentLoadOp::CLEAR,
         .clearDepthValue = 1.0f});
 
@@ -206,10 +209,10 @@ void ProjectApplication::RenderScene()
     auto nearestSampler = Fwog::Sampler(ss);
 
     //Could refactor this to be a function of a class
-    auto drawObject = [&](DrawObject const& object, Fwog::Texture const& textureAlbedo, Fwog::Sampler const& sampler)
+    auto drawObject = [&](DrawObject const& object, Fwog::Texture const& textureAlbedo, Fwog::Sampler const& sampler, Camera const& camera)
     {
         Fwog::Cmd::BindGraphicsPipeline(pipelineTextured.value());
-        Fwog::Cmd::BindUniformBuffer(0, camera.value().globalUniformsBuffer.value());
+        Fwog::Cmd::BindUniformBuffer(0, camera.cameraUniformsBuffer.value());
         Fwog::Cmd::BindUniformBuffer(1, object.modelUniformBuffer.value());
 
         Fwog::Cmd::BindSampledImage(0, textureAlbedo, sampler);
@@ -218,7 +221,7 @@ void ProjectApplication::RenderScene()
         Fwog::Cmd::DrawIndexed(object.indexCount, 1, 0, 0, 0);
     };
 
-    drawObject(exampleCubes[0], cubeTexture.value(), nearestSampler);
+    drawObject(exampleCubes[0], cubeTexture.value(), nearestSampler, sceneCamera.value());
     Fwog::EndRendering();
 
 }
@@ -231,7 +234,7 @@ void ProjectApplication::RenderUI()
         ImGui::End();
     }
 
-    ImGui::ShowDemoWindow();
+    //ImGui::ShowDemoWindow();
 }
 
 
