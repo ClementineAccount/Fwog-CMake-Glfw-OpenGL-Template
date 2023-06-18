@@ -14,7 +14,7 @@ While Fwog comes with some [examples](https://github.com/JuanDiegoMontoya/Fwog/t
 ## To Do
 
 - Add camera control examples
-- Add skybox example
+- [Add skybox example](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/issues/2)
 - Add multiple cubes for the example scene (which also shows depth testing)
 - Refactor DrawObject class
 - (Maybe) Add Deccer's Cubes example that uses Fwog. If I do it would be a separate scene.
