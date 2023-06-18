@@ -4,8 +4,7 @@
 
 This is an adaption of the original [Deccer's CMake-GLFW-OpenGL-Template](https://github.com/deccer/CMake-Glfw-OpenGL-Template) that comes with a [Fwog](https://github.com/JuanDiegoMontoya/Fwog) example scene featuring a textured cube. Fwog is a Low-level OpenGL 4.6 abstraction written in C++20.
 
-![image](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/assets/26779639/4eb8aaf5-44f2-4851-85b8-75093da6cdea)
-
+![image](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/assets/26779639/005458c3-6191-4b67-a511-73c698a586c9)
 
 
 ## Why?
