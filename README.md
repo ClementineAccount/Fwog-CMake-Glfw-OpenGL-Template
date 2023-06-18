@@ -17,4 +17,4 @@ While Fwog comes with some [examples](https://github.com/JuanDiegoMontoya/Fwog/t
 - Add skybox example
 - Add multiple cubes for the example scene (which also shows depth testing)
 - Refactor DrawObject class
-- (Maybe) Add Deccer's Cubes example that uses Fwog
+- (Maybe) Add Deccer's Cubes example that uses Fwog. If I do it would be a separate scene.
