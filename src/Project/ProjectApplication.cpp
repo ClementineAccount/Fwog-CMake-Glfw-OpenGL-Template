@@ -232,23 +232,23 @@ void ProjectApplication::Update(double dt)
             currCamera.camPos.x -= camSpeed * dt;
         }
 
-        if (IsKeyPressed(GLFW_KEY_W))
+        if (IsKeyPressed(GLFW_KEY_Q))
         {
             isUpdate = true;
             currCamera.camPos.z += camSpeed * dt;
         }
-        else if (IsKeyPressed(GLFW_KEY_S))
+        else if (IsKeyPressed(GLFW_KEY_E))
         {
             isUpdate = true;
             currCamera.camPos.z -= camSpeed * dt;
         }
 
-        if (IsKeyPressed(GLFW_KEY_Q))
+        if (IsKeyPressed(GLFW_KEY_W))
         {
             isUpdate = true;
             currCamera.camPos.y += camSpeed * dt;
         }
-        else if (IsKeyPressed(GLFW_KEY_E))
+        else if (IsKeyPressed(GLFW_KEY_S))
         {
             isUpdate = true;
             currCamera.camPos.y -= camSpeed * dt;
