@@ -148,6 +148,24 @@ Camera::Camera()
     cameraUniformsBuffer.value().SubData(cameraStruct, 0);
 }
 
+void GameObject::UpdateDraw()
+{
+    glm::mat4& model = drawData.objectStruct.modelTransform;
+    model = glm::mat4(1.0f);
+
+    //Translate, Scale than Rotate
+
+    model = glm::translate(model, position);
+    model = glm::scale(model, scale);
+
+    //tbh we don't need this for the example
+    model = glm::rotate(model, glm::radians(eulerAngleDegrees.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(eulerAngleDegrees.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(eulerAngleDegrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    drawData.modelUniformBuffer.value().SubData(drawData.objectStruct, 0);
+}
+
 void ProjectApplication::AfterCreatedUiContext()
 {
 }
@@ -171,7 +189,16 @@ bool ProjectApplication::Load()
     {
         //https://en.cppreference.com/w/cpp/language/class_template_argument_deduction 
         //because the containers which are the parameters are constexpr
-        exampleCubes[i] = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices, Primitives::cubeIndices.size());
+        exampleCubes[i].drawData = DrawObject::Init(Primitives::cubeVertices, Primitives::cubeIndices, Primitives::cubeIndices.size());
+
+        //Offset the transforms of the cube
+
+        static constexpr float offsetForward = 10.0f;
+        exampleCubes[i].position.z -= i * offsetForward;
+
+        exampleCubes[i].scale *= (i + 1);
+
+        exampleCubes[i].UpdateDraw();
     }
 
     cubeTexture = MakeTexture("./data/textures/fwog_logo.png");
@@ -272,7 +299,11 @@ void ProjectApplication::RenderScene()
         Fwog::Cmd::DrawIndexed(object.indexCount, 1, 0, 0, 0);
     };
 
-    drawObject(exampleCubes[0], cubeTexture.value(), nearestSampler, sceneCamera.value());
+    for (size_t i = 0; i < numCubes; ++i)
+    {
+        drawObject(exampleCubes[i].drawData, cubeTexture.value(), nearestSampler, sceneCamera.value());
+    }
+
     Fwog::EndRendering();
 
 }

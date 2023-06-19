@@ -129,6 +129,21 @@ struct Camera
     std::optional<Fwog::TypedBuffer<CameraUniforms>> cameraUniformsBuffer;
 };
 
+//Could potentially rename it
+struct GameObject
+{
+    void UpdateDraw();
+
+    //Could refactor this data into a Transform struct
+    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    //Transformation only expected along one axis so for example purpose this is ok for now.
+    glm::vec3 eulerAngleDegrees = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    DrawObject drawData;
+};
+
 class ProjectApplication final : public Application
 {
 protected:
@@ -152,6 +167,6 @@ private:
     std::optional<Fwog::Texture> cubeTexture;
     std::optional<Camera> sceneCamera;
 
-    static constexpr size_t numCubes = 2;
-    DrawObject exampleCubes[numCubes];
+    static constexpr size_t numCubes = 5;
+    GameObject exampleCubes[numCubes];
 };
