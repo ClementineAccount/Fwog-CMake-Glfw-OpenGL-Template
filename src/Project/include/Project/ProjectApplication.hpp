@@ -110,6 +110,10 @@ struct DrawObject
 
 struct Camera
 {
+    glm::vec3 camPos = glm::vec3(3.0f, 3.0f, 3.0f);
+    glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    
     //To Do: Rename this from 'global' to camera stuff. Its just called that because the Fwog Examples did.
     struct CameraUniforms {
         glm::mat4 viewProj;
@@ -127,8 +131,8 @@ protected:
     void BeforeDestroyUiContext() override;
     bool Load() override;
     void RenderScene() override;
-    void RenderUI() override;
-    void Update() override;
+    void RenderUI(double dt) override;
+    void Update(double dt) override;
 
 private:
     //uint32_t shaderProgram;

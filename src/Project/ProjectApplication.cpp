@@ -124,28 +124,29 @@ void ProjectApplication::BeforeDestroyUiContext()
 
 Camera ProjectApplication::MakeCamera()
 {
-    Camera camera;
+    Camera currCamera;
 
     static constexpr float nearPlane = 0.01f;
     static constexpr float farPlane = 5000.0f;
 
-    static glm::vec3 camPos = glm::vec3(3.0f, 3.0f, 3.0f);
-    static glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
-    static glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    static glm::mat4 view = glm::lookAt(camPos, origin, up);
+    currCamera.camPos = glm::vec3(3.0f, 3.0f, 3.0f);
+    currCamera.target = glm::vec3(0.0f, 0.0f, 0.0f); //Target the origin
+    currCamera.up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    static glm::mat4 view = glm::lookAt(currCamera.camPos,  currCamera.target,  currCamera.up);
     static glm::mat4 proj =
         glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
     static glm::mat4 viewProj = proj * view;
 
-    camera.cameraStruct.viewProj = viewProj;
-    camera.cameraStruct.eyePos = camPos;
-    camera.cameraUniformsBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
+    currCamera.cameraStruct.viewProj = viewProj;
+    currCamera.cameraStruct.eyePos = currCamera.camPos;
+    currCamera.cameraUniformsBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
         Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
 
-    camera.cameraUniformsBuffer.value().SubData(camera.cameraStruct, 0);
+    currCamera.cameraUniformsBuffer.value().SubData(currCamera.cameraStruct, 0);
     //globalUniformsBuffer_skybox.value().SubData(globalStruct, 0);
 
-    return camera;
+    return currCamera;
 }
 
 
@@ -172,13 +173,25 @@ bool ProjectApplication::Load()
     return true;
 }
 
-void ProjectApplication::Update()
+void ProjectApplication::Update(double dt)
 {
     if (IsKeyPressed(GLFW_KEY_ESCAPE))
     {
         Close();
     }
 
+
+    //To Do: Move this into camera class
+    //This is an arcball style update
+    auto updateCameraArc = [&](Camera& currCamera)
+    {
+        static float camSpeed = 2.0f;
+        if (IsKeyPressed(GLFW_KEY_A))
+        {
+            currCamera.camPos.x += camSpeed * dt;
+        }
+
+    }
 
 
 }
@@ -226,7 +239,7 @@ void ProjectApplication::RenderScene()
 
 }
 
-void ProjectApplication::RenderUI()
+void ProjectApplication::RenderUI([maybe ununused] double dt)
 {
     ImGui::Begin("Window");
     {

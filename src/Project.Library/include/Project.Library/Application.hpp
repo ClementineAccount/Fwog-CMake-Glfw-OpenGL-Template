@@ -17,13 +17,13 @@ protected:
     virtual bool Load();
     virtual void Unload();
     virtual void RenderScene();
-    virtual void RenderUI();
-    virtual void Update();
+    virtual void RenderUI(double dt);
+    virtual void Update(double dt);
 
     static constexpr unsigned int windowWidth = 1920;
     static constexpr unsigned int windowHeight = 1080;
 
 private:
     GLFWwindow* _windowHandle = nullptr;
-    void Render();
+    void Render(double dt);
 };
