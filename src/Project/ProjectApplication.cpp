@@ -313,6 +313,7 @@ void ProjectApplication::RenderUI(double dt)
     ImGui::Begin("Window");
     {
         ImGui::TextUnformatted("Hello Fwog!");
+        ImGui::TextUnformatted("Use WASD and QE for Arcball Controls.");
         ImGui::End();
     }
 
