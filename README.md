@@ -4,7 +4,8 @@
 
 This is an adaption of the original [Deccer's CMake-GLFW-OpenGL-Template](https://github.com/deccer/CMake-Glfw-OpenGL-Template) that comes with a [Fwog](https://github.com/JuanDiegoMontoya/Fwog) example scene featuring a textured cube. Fwog is a Low-level OpenGL 4.6 abstraction written in C++20.
 
-![image](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/assets/26779639/005458c3-6191-4b67-a511-73c698a586c9)
+![image](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/assets/26779639/b3979187-e28a-4000-a5f3-09003cb1a70c)
+
 
 
 ## Why?
@@ -15,6 +16,6 @@ While Fwog comes with some [examples](https://github.com/JuanDiegoMontoya/Fwog/t
 
 - [x] Add camera control examples
 - [ ]  [Add skybox example](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/issues/2)
-- [ ] Add multiple cubes for the example scene (which also shows depth testing)
-- [ ] Refactor DrawObject class
+- [x] Add multiple cubes for the example scene (which also shows depth testing)
+- [x] Refactor DrawObject class
 - (Maybe) Add Deccer's Cubes example that uses Fwog. If I do it would be a separate scene.
