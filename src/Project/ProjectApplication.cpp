@@ -190,9 +190,28 @@ void ProjectApplication::Update(double dt)
         {
             currCamera.camPos.x += camSpeed * dt;
         }
+        else if (IsKeyPressed(GLFW_KEY_D))
+        {
+            currCamera.camPos.x -= camSpeed * dt;
+        }
+
+        currCamera.cameraStruct.eyePos = currCamera.camPos;
+
+        static constexpr float nearPlane = 0.01f;
+        static constexpr float farPlane = 5000.0f;
+
+        glm::mat4 view = glm::lookAt(currCamera.camPos,  currCamera.target,  currCamera.up);
+        glm::mat4 proj = glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
+        glm::mat4 viewProj = proj * view;
+
+        currCamera.cameraStruct.viewProj = viewProj;
+        currCamera.cameraStruct.eyePos = currCamera.camPos;
+
+        currCamera.cameraUniformsBuffer.value().SubData(currCamera.cameraStruct, 0);
+
     };
 
-
+    updateCameraArc(sceneCamera.value());
 }
 
 void ProjectApplication::RenderScene()
