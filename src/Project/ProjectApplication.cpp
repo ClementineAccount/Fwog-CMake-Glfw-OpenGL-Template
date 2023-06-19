@@ -112,6 +112,41 @@ Fwog::Texture ProjectApplication::MakeTexture(std::string_view texturePath, int3
     return createdTexture;
 }
 
+void Camera::Update()
+{
+    cameraStruct.eyePos = camPos;
+
+    glm::mat4 view = glm::lookAt(camPos,  target,  up);
+    glm::mat4 proj = glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
+    glm::mat4 viewProj = proj * view;
+
+    cameraStruct.viewProj = viewProj;
+    cameraStruct.eyePos = camPos;
+
+    cameraUniformsBuffer.value().SubData(cameraStruct, 0);
+
+}
+
+Camera::Camera()
+{
+    nearPlane = 0.01f;
+    farPlane = 5000.0f;
+
+    camPos = glm::vec3(3.0f, 3.0f, 3.0f);
+    target = glm::vec3(0.0f, 0.0f, 0.0f); //Target the origin
+    up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 view = glm::lookAt(camPos,  target,  up);
+    glm::mat4 proj =
+        glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
+
+    cameraStruct.viewProj = proj * view;
+    cameraStruct.eyePos = camPos;
+    cameraUniformsBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
+        Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
+
+    cameraUniformsBuffer.value().SubData(cameraStruct, 0);
+}
 
 void ProjectApplication::AfterCreatedUiContext()
 {
@@ -120,33 +155,6 @@ void ProjectApplication::AfterCreatedUiContext()
 void ProjectApplication::BeforeDestroyUiContext()
 {
 
-}
-
-Camera ProjectApplication::MakeCamera()
-{
-    Camera currCamera;
-
-    static constexpr float nearPlane = 0.01f;
-    static constexpr float farPlane = 5000.0f;
-
-    currCamera.camPos = glm::vec3(3.0f, 3.0f, 3.0f);
-    currCamera.target = glm::vec3(0.0f, 0.0f, 0.0f); //Target the origin
-    currCamera.up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    static glm::mat4 view = glm::lookAt(currCamera.camPos,  currCamera.target,  currCamera.up);
-    static glm::mat4 proj =
-        glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
-    static glm::mat4 viewProj = proj * view;
-
-    currCamera.cameraStruct.viewProj = viewProj;
-    currCamera.cameraStruct.eyePos = currCamera.camPos;
-    currCamera.cameraUniformsBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
-        Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
-
-    currCamera.cameraUniformsBuffer.value().SubData(currCamera.cameraStruct, 0);
-    //globalUniformsBuffer_skybox.value().SubData(globalStruct, 0);
-
-    return currCamera;
 }
 
 
@@ -168,7 +176,7 @@ bool ProjectApplication::Load()
 
     cubeTexture = MakeTexture("./data/textures/fwog_logo.png");
         
-    sceneCamera = MakeCamera();
+    sceneCamera = Camera();
 
     return true;
 }
@@ -180,35 +188,48 @@ void ProjectApplication::Update(double dt)
         Close();
     }
 
-
-    //To Do: Move this into camera class
-    //This is an arcball style update
+    //This is an arcball style update. Could move it maybe?
     auto updateCameraArc = [&](Camera& currCamera)
     {
+        bool isUpdate = false;
         static float camSpeed = 2.0f;
+        
         if (IsKeyPressed(GLFW_KEY_A))
         {
+            isUpdate = true;
             currCamera.camPos.x += camSpeed * dt;
         }
         else if (IsKeyPressed(GLFW_KEY_D))
         {
+            isUpdate = true;
             currCamera.camPos.x -= camSpeed * dt;
         }
 
-        currCamera.cameraStruct.eyePos = currCamera.camPos;
+        if (IsKeyPressed(GLFW_KEY_W))
+        {
+            isUpdate = true;
+            currCamera.camPos.z += camSpeed * dt;
+        }
+        else if (IsKeyPressed(GLFW_KEY_S))
+        {
+            isUpdate = true;
+            currCamera.camPos.z -= camSpeed * dt;
+        }
 
-        static constexpr float nearPlane = 0.01f;
-        static constexpr float farPlane = 5000.0f;
+        if (IsKeyPressed(GLFW_KEY_Q))
+        {
+            isUpdate = true;
+            currCamera.camPos.y += camSpeed * dt;
+        }
+        else if (IsKeyPressed(GLFW_KEY_E))
+        {
+            isUpdate = true;
+            currCamera.camPos.y -= camSpeed * dt;
+        }
 
-        glm::mat4 view = glm::lookAt(currCamera.camPos,  currCamera.target,  currCamera.up);
-        glm::mat4 proj = glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
-        glm::mat4 viewProj = proj * view;
-
-        currCamera.cameraStruct.viewProj = viewProj;
-        currCamera.cameraStruct.eyePos = currCamera.camPos;
-
-        currCamera.cameraUniformsBuffer.value().SubData(currCamera.cameraStruct, 0);
-
+        //we only need to recalculate the viewProj if camera data did change
+        if (isUpdate)
+            currCamera.Update();
     };
 
     updateCameraArc(sceneCamera.value());

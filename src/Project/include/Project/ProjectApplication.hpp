@@ -110,11 +110,16 @@ struct DrawObject
 
 struct Camera
 {
+    Camera();
+    void Update();
+
     glm::vec3 camPos = glm::vec3(3.0f, 3.0f, 3.0f);
     glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    float nearPlane = 0.01f;
+    float farPlane = 5000.0f;
     
-    //To Do: Rename this from 'global' to camera stuff. Its just called that because the Fwog Examples did.
     struct CameraUniforms {
         glm::mat4 viewProj;
         glm::vec3 eyePos;
@@ -142,8 +147,6 @@ private:
 
     //Using stbi_load
     Fwog::Texture MakeTexture(std::string_view texturePath, int32_t expectedChannels = 4);
-
-    Camera MakeCamera();
 
     std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::Texture> cubeTexture;
