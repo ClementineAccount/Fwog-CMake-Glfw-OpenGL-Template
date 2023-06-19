@@ -190,8 +190,7 @@ void ProjectApplication::Update(double dt)
         {
             currCamera.camPos.x += camSpeed * dt;
         }
-
-    }
+    };
 
 
 }
@@ -239,7 +238,7 @@ void ProjectApplication::RenderScene()
 
 }
 
-void ProjectApplication::RenderUI([maybe ununused] double dt)
+void ProjectApplication::RenderUI(double dt)
 {
     ImGui::Begin("Window");
     {
