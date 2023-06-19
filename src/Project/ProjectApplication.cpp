@@ -250,7 +250,6 @@ void ProjectApplication::RenderScene()
         .depthLoadOp = Fwog::AttachmentLoadOp::CLEAR,
         .clearDepthValue = 1.0f});
 
-
     Fwog::SamplerState ss;
     ss.minFilter = Fwog::Filter::LINEAR;
     ss.magFilter = Fwog::Filter::LINEAR;
@@ -258,7 +257,7 @@ void ProjectApplication::RenderScene()
     ss.addressModeU = Fwog::AddressMode::REPEAT;
     ss.addressModeV = Fwog::AddressMode::REPEAT;
     ss.anisotropy = Fwog::SampleCount::SAMPLES_16;
-    auto nearestSampler = Fwog::Sampler(ss);
+    static auto nearestSampler = Fwog::Sampler(ss);
 
     //Could refactor this to be a function of a class
     auto drawObject = [&](DrawObject const& object, Fwog::Texture const& textureAlbedo, Fwog::Sampler const& sampler, Camera const& camera)
