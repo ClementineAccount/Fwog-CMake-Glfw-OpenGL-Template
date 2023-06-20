@@ -505,7 +505,8 @@ void ProjectApplication::RenderScene()
         Fwog::Cmd::Draw(Primitives::skyboxVertices.size() / 3, 1, 0, 0);
     };
 
-    drawSkybox(skybox.value(), nearestSampler, sceneCamera.value());
+    if (_skyboxVisible)
+        drawSkybox(skybox.value(), nearestSampler, sceneCamera.value());
 
     Fwog::EndRendering();
 
@@ -517,6 +518,7 @@ void ProjectApplication::RenderUI(double dt)
     {
         ImGui::TextUnformatted("Hello Fwog!");
         ImGui::TextUnformatted("Use WASD and QE for Arcball Controls.");
+        ImGui::Checkbox("Skybox", &_skyboxVisible);
         ImGui::End();
     }
 

@@ -207,4 +207,6 @@ private:
     GameObject exampleCubes[numCubes];
 
     std::optional<Skybox> skybox;
+
+    bool _skyboxVisible = false;
 };
