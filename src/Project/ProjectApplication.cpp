@@ -81,17 +81,18 @@ DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList, size_t in
 
 void Camera::Update()
 {
-    cameraStruct.eyePos = camPos;
 
     glm::mat4 view = glm::lookAt(camPos,  target,  up);
+    glm::mat4 viewSky = glm::mat4(glm::mat3(view));
     glm::mat4 proj = glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
-    glm::mat4 viewProj = proj * view;
 
-    cameraStruct.viewProj = viewProj;
+    cameraStruct.viewProj = proj * view;
     cameraStruct.eyePos = camPos;
-
     cameraUniformsBuffer.value().SubData(cameraStruct, 0);
 
+    cameraStruct.viewProj = proj * viewSky;
+
+    cameraUniformsSkyboxBuffer.value().SubData(cameraStruct, 0);
 }
 
 Camera::Camera()
@@ -112,7 +113,138 @@ Camera::Camera()
     cameraUniformsBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
         Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
 
+    cameraUniformsSkyboxBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
+        Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
+
     cameraUniformsBuffer.value().SubData(cameraStruct, 0);
+
+    Update();
+}
+
+Skybox::Skybox()
+{
+    //To Do: Move this to a static function
+
+    auto LoadFile = [](std::string_view path)
+    {
+        std::ifstream file{ path.data() };
+        std::string returnString { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+        return returnString;
+    };
+
+    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile("./data/shaders/skybox.vs.glsl"));
+    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile("./data/shaders/skybox.fs.glsl"));
+
+    static constexpr auto sceneInputBindingDescs =
+        std::array{Fwog::VertexInputBindingDescription{
+        // position
+        .location = 0,
+        .binding = 0,
+        .format = Fwog::Format::R32G32B32_FLOAT,
+        .offset = 0}};
+
+    auto inputDescs = sceneInputBindingDescs;
+    auto primDescs = Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
+
+    pipeline = Fwog::GraphicsPipeline{{
+            .vertexShader = &vertexShader,
+            .fragmentShader = &fragmentShader,
+            .inputAssemblyState = primDescs,
+            .vertexInputState = {inputDescs},
+            .depthState = {.depthTestEnable = true,
+            .depthWriteEnable = true,
+            .depthCompareOp = Fwog::CompareOp::LESS_OR_EQUAL},
+        }};
+
+    vertexBuffer.emplace(Primitives::skyboxVertices);
+
+    //Should probably move this to a function
+
+    using namespace Fwog;
+
+    int32_t textureWidth, textureHeight, textureChannels;
+    constexpr int32_t expected_num_channels = 4;
+
+    unsigned char* textureData_skybox_front =
+        stbi_load("./data/textures/skybox/front.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_front);
+
+    unsigned char* textureData_skybox_back =
+        stbi_load("./data/textures/skybox/back.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_back);
+
+    unsigned char* textureData_skybox_left =
+        stbi_load("./data/textures/skybox/left.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_left);
+
+    unsigned char* textureData_skybox_right =
+        stbi_load("./data/textures/skybox/right.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_right);
+
+    unsigned char* textureData_skybox_up =
+        stbi_load("./data/textures/skybox/up.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_up);
+
+    unsigned char* textureData_skybox_down =
+        stbi_load("./data/textures/skybox/down.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_down);
+
+    // https://www.khronos.org/opengl/wiki/Cubemap_Texture
+    const uint32_t right_id = 0;
+    const uint32_t left_id = 1;
+    const uint32_t up_id = 2;
+    const uint32_t down_id = 3;
+
+    // front instead of forwrad to match the cubemap naming
+    const uint32_t front_id = 4;
+    const uint32_t back_id = 5;
+
+    uint32_t num_cube_faces = 6;
+
+    Fwog::TextureCreateInfo createInfo{
+        .imageType = ImageType::TEX_CUBEMAP,
+        .format = Fwog::Format::R8G8B8A8_SRGB,
+        .extent = {static_cast<uint32_t>(textureWidth),
+        static_cast<uint32_t>(textureHeight)},
+        .mipLevels =
+        uint32_t(1 + floor(log2(glm::max(textureWidth, textureHeight)))),
+        .arrayLayers = 1,
+        .sampleCount = SampleCount::SAMPLES_1,
+    };
+
+    texture = Fwog::Texture(createInfo);
+
+
+    auto upload_face = [&](uint32_t curr_face,
+        unsigned char* texture_pixel_data) {
+            Fwog::TextureUpdateInfo updateInfo{
+                .dimension = Fwog::UploadDimension::THREE,
+                .level = 0,
+                .offset = {.depth = curr_face},
+                .size = {static_cast<uint32_t>(textureWidth),
+                static_cast<uint32_t>(textureHeight), 1},
+                .format = Fwog::UploadFormat::RGBA,
+                .type = Fwog::UploadType::UBYTE,
+                .pixels = texture_pixel_data};
+            texture.value().SubImage(updateInfo);
+
+            stbi_image_free(texture_pixel_data);
+    };
+
+    upload_face(right_id, textureData_skybox_right);
+    upload_face(left_id, textureData_skybox_left);
+    upload_face(up_id, textureData_skybox_up);
+    upload_face(down_id, textureData_skybox_down);
+    upload_face(front_id, textureData_skybox_front);
+    upload_face(back_id, textureData_skybox_back);
+
+    texture.value().GenMipmaps();
 }
 
 void GameObject::UpdateDraw()
@@ -131,6 +263,59 @@ void GameObject::UpdateDraw()
     model = glm::rotate(model, glm::radians(eulerAngleDegrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     drawData.modelUniformBuffer.value().SubData(drawData.objectStruct, 0);
+}
+
+Fwog::GraphicsPipeline ProjectApplication::MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
+{
+    auto LoadFile = [](std::string_view path)
+    {
+        std::ifstream file{ path.data() };
+        std::string returnString { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+        return returnString;
+    };
+
+    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
+    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
+
+    //Ensures this matches the shader and your vertex buffer data type
+
+    static constexpr auto sceneInputBindingDescs = std::array{
+        Fwog::VertexInputBindingDescription{
+            // position
+            .location = 0,
+            .binding = 0,
+            .format = Fwog::Format::R32G32B32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, position),
+    },
+    Fwog::VertexInputBindingDescription{
+            // normal
+            .location = 1,
+            .binding = 0,
+            .format = Fwog::Format::R32G32B32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, normal),
+    },
+    Fwog::VertexInputBindingDescription{
+            // texcoord
+            .location = 2,
+            .binding = 0,
+            .format = Fwog::Format::R32G32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, uv),
+    },
+    };
+
+    auto inputDescs = sceneInputBindingDescs;
+    auto primDescs =
+        Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
+
+    return Fwog::GraphicsPipeline{{
+            .vertexShader = &vertexShader,
+            .fragmentShader = &fragmentShader,
+            .inputAssemblyState = primDescs,
+            .vertexInputState = {inputDescs},
+            .depthState = {.depthTestEnable = true,
+            .depthWriteEnable = true,
+            .depthCompareOp = Fwog::CompareOp::LESS},
+        }};
 }
 
 
@@ -204,8 +389,11 @@ bool ProjectApplication::Load()
     }
 
     cubeTexture = MakeTexture("./data/textures/fwog_logo.png");
-        
+
     sceneCamera = Camera();
+
+
+    skybox = Skybox();
 
     return true;
 }
@@ -306,6 +494,19 @@ void ProjectApplication::RenderScene()
         drawObject(exampleCubes[i].drawData, cubeTexture.value(), nearestSampler, sceneCamera.value());
     }
 
+    auto drawSkybox = [&](Skybox const& skybox, Fwog::Sampler const& sampler, Camera const& camera)
+    {
+        Fwog::Cmd::BindGraphicsPipeline(skybox.pipeline.value());
+        Fwog::Cmd::BindUniformBuffer(0, camera.cameraUniformsSkyboxBuffer.value());
+
+        Fwog::Cmd::BindSampledImage(0, skybox.texture.value(), sampler);
+        Fwog::Cmd::BindVertexBuffer(0, skybox.vertexBuffer.value(), 0, 3 * sizeof(float));
+        Fwog::Cmd::Draw(Primitives::skyboxVertices.size() / 3, 1, 0, 0);
+    };
+
+    if (_skyboxVisible)
+        drawSkybox(skybox.value(), nearestSampler, sceneCamera.value());
+
     Fwog::EndRendering();
 
 }
@@ -316,6 +517,7 @@ void ProjectApplication::RenderUI(double dt)
     {
         ImGui::TextUnformatted("Hello Fwog!");
         ImGui::TextUnformatted("Use WASD and QE for Arcball Controls.");
+        ImGui::Checkbox("Skybox", &_skyboxVisible);
         ImGui::End();
     }
 
@@ -323,58 +525,7 @@ void ProjectApplication::RenderUI(double dt)
 }
 
 
-Fwog::GraphicsPipeline ProjectApplication::MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
-{
-    auto LoadFile = [](std::string_view path)
-    {
-        std::ifstream file{ path.data() };
-        std::string returnString { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-        return returnString;
-    };
 
-    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
-    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
-
-    //Ensures this matches the shader and your vertex buffer data type
-
-    static constexpr auto sceneInputBindingDescs = std::array{
-        Fwog::VertexInputBindingDescription{
-            // position
-            .location = 0,
-            .binding = 0,
-            .format = Fwog::Format::R32G32B32_FLOAT,
-            .offset = offsetof(Primitives::Vertex, position),
-    },
-    Fwog::VertexInputBindingDescription{
-            // normal
-            .location = 1,
-            .binding = 0,
-            .format = Fwog::Format::R32G32B32_FLOAT,
-            .offset = offsetof(Primitives::Vertex, normal),
-    },
-    Fwog::VertexInputBindingDescription{
-            // texcoord
-            .location = 2,
-            .binding = 0,
-            .format = Fwog::Format::R32G32_FLOAT,
-            .offset = offsetof(Primitives::Vertex, uv),
-    },
-    };
-
-    auto inputDescs = sceneInputBindingDescs;
-    auto primDescs =
-        Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
-
-    return Fwog::GraphicsPipeline{{
-            .vertexShader = &vertexShader,
-            .fragmentShader = &fragmentShader,
-            .inputAssemblyState = primDescs,
-            .vertexInputState = {inputDescs},
-            .depthState = {.depthTestEnable = true,
-            .depthWriteEnable = true,
-            .depthCompareOp = Fwog::CompareOp::LESS},
-        }};
-}
 
 //bool ProjectApplication::MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath)
 //{
