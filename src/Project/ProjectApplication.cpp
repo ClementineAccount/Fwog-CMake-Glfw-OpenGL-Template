@@ -115,6 +115,13 @@ Camera::Camera()
     cameraUniformsBuffer.value().SubData(cameraStruct, 0);
 }
 
+Skybox::Skybox()
+{
+    //Create the pipeline first
+
+
+}
+
 void GameObject::UpdateDraw()
 {
     glm::mat4& model = drawData.objectStruct.modelTransform;
@@ -131,6 +138,59 @@ void GameObject::UpdateDraw()
     model = glm::rotate(model, glm::radians(eulerAngleDegrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     drawData.modelUniformBuffer.value().SubData(drawData.objectStruct, 0);
+}
+
+Fwog::GraphicsPipeline ProjectApplication::MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
+{
+    auto LoadFile = [](std::string_view path)
+    {
+        std::ifstream file{ path.data() };
+        std::string returnString { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+        return returnString;
+    };
+
+    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
+    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
+
+    //Ensures this matches the shader and your vertex buffer data type
+
+    static constexpr auto sceneInputBindingDescs = std::array{
+        Fwog::VertexInputBindingDescription{
+            // position
+            .location = 0,
+            .binding = 0,
+            .format = Fwog::Format::R32G32B32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, position),
+    },
+    Fwog::VertexInputBindingDescription{
+            // normal
+            .location = 1,
+            .binding = 0,
+            .format = Fwog::Format::R32G32B32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, normal),
+    },
+    Fwog::VertexInputBindingDescription{
+            // texcoord
+            .location = 2,
+            .binding = 0,
+            .format = Fwog::Format::R32G32_FLOAT,
+            .offset = offsetof(Primitives::Vertex, uv),
+    },
+    };
+
+    auto inputDescs = sceneInputBindingDescs;
+    auto primDescs =
+        Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
+
+    return Fwog::GraphicsPipeline{{
+            .vertexShader = &vertexShader,
+            .fragmentShader = &fragmentShader,
+            .inputAssemblyState = primDescs,
+            .vertexInputState = {inputDescs},
+            .depthState = {.depthTestEnable = true,
+            .depthWriteEnable = true,
+            .depthCompareOp = Fwog::CompareOp::LESS},
+        }};
 }
 
 
@@ -323,58 +383,7 @@ void ProjectApplication::RenderUI(double dt)
 }
 
 
-Fwog::GraphicsPipeline ProjectApplication::MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
-{
-    auto LoadFile = [](std::string_view path)
-    {
-        std::ifstream file{ path.data() };
-        std::string returnString { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-        return returnString;
-    };
 
-    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
-    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
-
-    //Ensures this matches the shader and your vertex buffer data type
-
-    static constexpr auto sceneInputBindingDescs = std::array{
-        Fwog::VertexInputBindingDescription{
-            // position
-            .location = 0,
-            .binding = 0,
-            .format = Fwog::Format::R32G32B32_FLOAT,
-            .offset = offsetof(Primitives::Vertex, position),
-    },
-    Fwog::VertexInputBindingDescription{
-            // normal
-            .location = 1,
-            .binding = 0,
-            .format = Fwog::Format::R32G32B32_FLOAT,
-            .offset = offsetof(Primitives::Vertex, normal),
-    },
-    Fwog::VertexInputBindingDescription{
-            // texcoord
-            .location = 2,
-            .binding = 0,
-            .format = Fwog::Format::R32G32_FLOAT,
-            .offset = offsetof(Primitives::Vertex, uv),
-    },
-    };
-
-    auto inputDescs = sceneInputBindingDescs;
-    auto primDescs =
-        Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
-
-    return Fwog::GraphicsPipeline{{
-            .vertexShader = &vertexShader,
-            .fragmentShader = &fragmentShader,
-            .inputAssemblyState = primDescs,
-            .vertexInputState = {inputDescs},
-            .depthState = {.depthTestEnable = true,
-            .depthWriteEnable = true,
-            .depthCompareOp = Fwog::CompareOp::LESS},
-        }};
-}
 
 //bool ProjectApplication::MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath)
 //{

@@ -132,9 +132,11 @@ struct DrawObject
 
 struct Skybox
 {
+    Skybox();
 
-
-
+    std::optional<Fwog::Buffer> vertexBuffer;
+    std::optional<Fwog::Texture> texture;
+    std::optional<Fwog::GraphicsPipeline> pipeline;
 };
 
 struct Camera
@@ -187,10 +189,9 @@ private:
     //uint32_t shaderProgram;
     //bool MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath);
 
-    Fwog::GraphicsPipeline MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
-
-    //Using stbi_load
-    Fwog::Texture MakeTexture(std::string_view texturePath, int32_t expectedChannels = 4);
+    //Can probably move these both to a different class
+    static Fwog::GraphicsPipeline MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
+    static Fwog::Texture MakeTexture(std::string_view texturePath, int32_t expectedChannels = 4);
 
     std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::Texture> cubeTexture;
