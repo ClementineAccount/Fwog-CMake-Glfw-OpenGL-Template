@@ -85,6 +85,28 @@ namespace Primitives
 
         20, 21, 22, 22, 23, 20,
     };
+
+    // https://learnopengl.com/Advanced-OpenGL/Cubemaps
+    static constexpr std::array<float, 3 * 6 * 6> skyboxVertices = {
+
+        -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
+        1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
+
+        -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
+        -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
+
+        1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
+
+        -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f,
+
+        -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
+        1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f
+    };
 }
 
 struct DrawObject
@@ -108,6 +130,15 @@ struct DrawObject
     std::optional<Fwog::TypedBuffer<ObjectUniform>> modelUniformBuffer;
 };
 
+struct Skybox
+{
+    Skybox();
+
+    std::optional<Fwog::Buffer> vertexBuffer;
+    std::optional<Fwog::Texture> texture;
+    std::optional<Fwog::GraphicsPipeline> pipeline;
+};
+
 struct Camera
 {
     Camera();
@@ -126,7 +157,11 @@ struct Camera
     };
 
     CameraUniforms cameraStruct;
+
     std::optional<Fwog::TypedBuffer<CameraUniforms>> cameraUniformsBuffer;
+
+    //Skybox doesn't pass in the translation
+    std::optional<Fwog::TypedBuffer<CameraUniforms>> cameraUniformsSkyboxBuffer;
 };
 
 //Could potentially rename it
@@ -146,6 +181,12 @@ struct GameObject
 
 class ProjectApplication final : public Application
 {
+public:
+
+    //Can probably move these both to a different class
+    static Fwog::GraphicsPipeline MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
+    static Fwog::Texture MakeTexture(std::string_view texturePath, int32_t expectedChannels = 4);
+
 protected:
     void AfterCreatedUiContext() override;
     void BeforeDestroyUiContext() override;
@@ -158,15 +199,14 @@ private:
     //uint32_t shaderProgram;
     //bool MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath);
 
-    Fwog::GraphicsPipeline MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
-
-    //Using stbi_load
-    Fwog::Texture MakeTexture(std::string_view texturePath, int32_t expectedChannels = 4);
-
     std::optional<Fwog::GraphicsPipeline> pipelineTextured;
     std::optional<Fwog::Texture> cubeTexture;
     std::optional<Camera> sceneCamera;
 
     static constexpr size_t numCubes = 5;
     GameObject exampleCubes[numCubes];
+
+    std::optional<Skybox> skybox;
+
+    bool _skyboxVisible = false;
 };

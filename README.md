@@ -6,6 +6,7 @@ This is an adaption of the original [Deccer's CMake-GLFW-OpenGL-Template](https:
 
 ![image](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/assets/26779639/b3979187-e28a-4000-a5f3-09003cb1a70c)
 
+![image](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/assets/26779639/9dd37cd5-3100-44f9-b647-4a5e10d53d15)
 
 
 ## Why?
@@ -15,7 +16,7 @@ While Fwog comes with some [examples](https://github.com/JuanDiegoMontoya/Fwog/t
 ## To Do
 
 - [x] Add camera control examples
-- [ ]  [Add skybox example](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/issues/2)
+- [x]  [Add skybox example](https://github.com/ClementineAccount/Fwog-CMake-Glfw-OpenGL-Template/issues/2)
 - [x] Add multiple cubes for the example scene (which also shows depth testing)
 - [x] Refactor DrawObject class
 - (Maybe) Add Deccer's Cubes example that uses Fwog. If I do it would be a separate scene.
