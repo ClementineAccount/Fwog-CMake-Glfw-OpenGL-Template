@@ -23,4 +23,4 @@ While Fwog comes with some [examples](https://github.com/JuanDiegoMontoya/Fwog/t
 
 ## Skybox
 
-Skybox texture has [CC0 license](https://polyhaven.com/license) and is from [polyhaven](https://polyhaven.com/a/industrial_sunset_02)
+Skybox texture has [CC0 license](https://polyhaven.com/license) and is from [polyhaven](https://polyhaven.com/a/industrial_sunset_02).
