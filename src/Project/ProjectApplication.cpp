@@ -79,39 +79,6 @@ DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList, size_t in
 }
 
 
-Fwog::Texture ProjectApplication::MakeTexture(std::string_view texturePath, int32_t expectedChannels)
-{
-    int32_t textureWidth, textureHeight, textureChannels;
-    unsigned char* textureData =
-        stbi_load(texturePath.data(), &textureWidth, &textureHeight, &textureChannels, expectedChannels);
-    assert(textureData);
-
-    //How many times can this texture be divided evenly by half?
-    uint32_t divideByHalfAmounts =  uint32_t(1 + floor(log2(glm::max(textureWidth, textureHeight))));
-
-    Fwog::Texture createdTexture = Fwog::CreateTexture2DMip(
-        {static_cast<uint32_t>(textureWidth),
-        static_cast<uint32_t>(textureHeight)},
-        Fwog::Format::R8G8B8A8_SRGB,
-        divideByHalfAmounts);
-
-    Fwog::TextureUpdateInfo updateInfo{
-        .dimension = Fwog::UploadDimension::TWO,
-        .level = 0,
-        .offset = {},
-        .size = {static_cast<uint32_t>(textureWidth),
-        static_cast<uint32_t>(textureHeight), 1},
-        .format = Fwog::UploadFormat::RGBA,
-        .type = Fwog::UploadType::UBYTE,
-        .pixels = textureData};
-
-    createdTexture.SubImage(updateInfo);
-    createdTexture.GenMipmaps();
-    stbi_image_free(textureData);
-
-    return createdTexture;
-}
-
 void Camera::Update()
 {
     cameraStruct.eyePos = camPos;
@@ -165,6 +132,41 @@ void GameObject::UpdateDraw()
 
     drawData.modelUniformBuffer.value().SubData(drawData.objectStruct, 0);
 }
+
+
+Fwog::Texture ProjectApplication::MakeTexture(std::string_view texturePath, int32_t expectedChannels)
+{
+    int32_t textureWidth, textureHeight, textureChannels;
+    unsigned char* textureData =
+        stbi_load(texturePath.data(), &textureWidth, &textureHeight, &textureChannels, expectedChannels);
+    assert(textureData);
+
+    //How many times can this texture be divided evenly by half?
+    uint32_t divideByHalfAmounts =  uint32_t(1 + floor(log2(glm::max(textureWidth, textureHeight))));
+
+    Fwog::Texture createdTexture = Fwog::CreateTexture2DMip(
+        {static_cast<uint32_t>(textureWidth),
+        static_cast<uint32_t>(textureHeight)},
+        Fwog::Format::R8G8B8A8_SRGB,
+        divideByHalfAmounts);
+
+    Fwog::TextureUpdateInfo updateInfo{
+        .dimension = Fwog::UploadDimension::TWO,
+        .level = 0,
+        .offset = {},
+        .size = {static_cast<uint32_t>(textureWidth),
+        static_cast<uint32_t>(textureHeight), 1},
+        .format = Fwog::UploadFormat::RGBA,
+        .type = Fwog::UploadType::UBYTE,
+        .pixels = textureData};
+
+    createdTexture.SubImage(updateInfo);
+    createdTexture.GenMipmaps();
+    stbi_image_free(textureData);
+
+    return createdTexture;
+}
+
 
 void ProjectApplication::AfterCreatedUiContext()
 {
