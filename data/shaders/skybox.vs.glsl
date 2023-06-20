@@ -16,7 +16,7 @@ void main()
   vec4 pos = viewProj * vec4(a_position, 1.0); 
 
   //In Fwog, by drawing this last with its own pipeline, you actually don't need to do this common hack to force depth buffer failure.
-  //gl_Position = pos.xyww;
+  gl_Position = pos.xyww;
 
-  gl_Position = pos;
+  //gl_Position = pos;
 }
