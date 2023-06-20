@@ -84,13 +84,15 @@ void Camera::Update()
     cameraStruct.eyePos = camPos;
 
     glm::mat4 view = glm::lookAt(camPos,  target,  up);
+    glm::mat4 viewSky = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), target, up); 
     glm::mat4 proj = glm::perspective(PI / 2.0f, 1.6f, nearPlane, farPlane);
-    glm::mat4 viewProj = proj * view;
 
-    cameraStruct.viewProj = viewProj;
+    cameraStruct.viewProj = proj * view;
     cameraStruct.eyePos = camPos;
 
     cameraUniformsBuffer.value().SubData(cameraStruct, 0);
+
+
 
 }
 
@@ -117,9 +119,98 @@ Camera::Camera()
 
 Skybox::Skybox()
 {
-    //Create the pipeline first
+    pipeline = ProjectApplication::MakePipeline("./data/shaders/skybox.vs.glsl", "./data/shaders/skybox.fs.glsl");
+
+    vertexBuffer.emplace(Primitives::skyboxVertices);
+
+    //Should probably move this to a function
+
+    using namespace Fwog;
+
+    int32_t textureWidth, textureHeight, textureChannels;
+    constexpr int32_t expected_num_channels = 4;
+
+    unsigned char* textureData_skybox_front =
+        stbi_load("./data/textures/skybox/front.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_front);
+
+    unsigned char* textureData_skybox_back =
+        stbi_load("./data/textures/skybox/back.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_back);
+
+    unsigned char* textureData_skybox_left =
+        stbi_load("./data/textures/skybox/left.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_left);
+
+    unsigned char* textureData_skybox_right =
+        stbi_load("./data/textures/skybox/right.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_right);
+
+    unsigned char* textureData_skybox_up =
+        stbi_load("./data/textures/skybox/up.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_up);
+
+    unsigned char* textureData_skybox_down =
+        stbi_load("./data/textures/skybox/down.png", &textureWidth, &textureHeight,
+            &textureChannels, expected_num_channels);
+    assert(textureData_skybox_down);
+
+    // https://www.khronos.org/opengl/wiki/Cubemap_Texture
+    const uint32_t right_id = 0;
+    const uint32_t left_id = 1;
+    const uint32_t up_id = 2;
+    const uint32_t down_id = 3;
+
+    // front instead of forwrad to match the cubemap naming
+    const uint32_t front_id = 4;
+    const uint32_t back_id = 5;
+
+    uint32_t num_cube_faces = 6;
+
+    Fwog::TextureCreateInfo createInfo{
+        .imageType = ImageType::TEX_CUBEMAP,
+        .format = Fwog::Format::R8G8B8A8_SRGB,
+        .extent = {static_cast<uint32_t>(textureWidth),
+        static_cast<uint32_t>(textureHeight)},
+        .mipLevels =
+        uint32_t(1 + floor(log2(glm::max(textureWidth, textureHeight)))),
+        .arrayLayers = 1,
+        .sampleCount = SampleCount::SAMPLES_1,
+    };
+
+    texture = Fwog::Texture(createInfo);
 
 
+    auto upload_face = [&](uint32_t curr_face,
+        unsigned char* texture_pixel_data) {
+            Fwog::TextureUpdateInfo updateInfo{
+                .dimension = Fwog::UploadDimension::THREE,
+                .level = 0,
+                .offset = {.depth = curr_face},
+                .size = {static_cast<uint32_t>(textureWidth),
+                static_cast<uint32_t>(textureHeight), 1},
+                .format = Fwog::UploadFormat::RGBA,
+                .type = Fwog::UploadType::UBYTE,
+                .pixels = texture_pixel_data};
+            texture.value().SubImage(updateInfo);
+
+            stbi_image_free(texture_pixel_data);
+    };
+
+    upload_face(right_id, textureData_skybox_right);
+    upload_face(left_id, textureData_skybox_left);
+    upload_face(up_id, textureData_skybox_up);
+    upload_face(down_id, textureData_skybox_down);
+    upload_face(front_id, textureData_skybox_front);
+    upload_face(back_id, textureData_skybox_back);
+
+    texture.value().GenMipmaps();
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 }
 
 void GameObject::UpdateDraw()
@@ -264,8 +355,10 @@ bool ProjectApplication::Load()
     }
 
     cubeTexture = MakeTexture("./data/textures/fwog_logo.png");
-        
+
     sceneCamera = Camera();
+
+    skybox = Skybox();
 
     return true;
 }
