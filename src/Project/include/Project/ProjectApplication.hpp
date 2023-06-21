@@ -137,6 +137,9 @@ struct Skybox
     std::optional<Fwog::Buffer> vertexBuffer;
     std::optional<Fwog::Texture> texture;
     std::optional<Fwog::GraphicsPipeline> pipeline;
+
+    static Fwog::GraphicsPipeline MakePipleine(std::string_view, std::string_view);
+    static Fwog::Texture MakeTexture();
 };
 
 struct Camera

@@ -121,10 +121,17 @@ Camera::Camera()
     Update();
 }
 
+
+
 Skybox::Skybox()
 {
-    //To Do: Move this to a static function
+    pipeline = MakePipleine("./data/shaders/skybox.vs.glsl", "./data/shaders/skybox.fs.glsl");
+    texture = MakeTexture();
+    vertexBuffer.emplace(Primitives::skyboxVertices);
+}
 
+Fwog::GraphicsPipeline Skybox::MakePipleine(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
+{
     auto LoadFile = [](std::string_view path)
     {
         std::ifstream file{ path.data() };
@@ -132,8 +139,8 @@ Skybox::Skybox()
         return returnString;
     };
 
-    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile("./data/shaders/skybox.vs.glsl"));
-    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile("./data/shaders/skybox.fs.glsl"));
+    auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
+    auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
 
     static constexpr auto sceneInputBindingDescs =
         std::array{Fwog::VertexInputBindingDescription{
@@ -146,7 +153,7 @@ Skybox::Skybox()
     auto inputDescs = sceneInputBindingDescs;
     auto primDescs = Fwog::InputAssemblyState{Fwog::PrimitiveTopology::TRIANGLE_LIST};
 
-    pipeline = Fwog::GraphicsPipeline{{
+    return Fwog::GraphicsPipeline{{
             .vertexShader = &vertexShader,
             .fragmentShader = &fragmentShader,
             .inputAssemblyState = primDescs,
@@ -155,11 +162,10 @@ Skybox::Skybox()
             .depthWriteEnable = true,
             .depthCompareOp = Fwog::CompareOp::LESS_OR_EQUAL},
         }};
+}
 
-    vertexBuffer.emplace(Primitives::skyboxVertices);
-
-    //Should probably move this to a function
-
+Fwog::Texture Skybox::MakeTexture()
+{
     using namespace Fwog;
 
     int32_t textureWidth, textureHeight, textureChannels;
@@ -218,7 +224,7 @@ Skybox::Skybox()
         .sampleCount = SampleCount::SAMPLES_1,
     };
 
-    texture = Fwog::Texture(createInfo);
+    Fwog::Texture texture = Fwog::Texture(createInfo);
 
 
     auto upload_face = [&](uint32_t curr_face,
@@ -232,7 +238,7 @@ Skybox::Skybox()
                 .format = Fwog::UploadFormat::RGBA,
                 .type = Fwog::UploadType::UBYTE,
                 .pixels = texture_pixel_data};
-            texture.value().SubImage(updateInfo);
+            texture.SubImage(updateInfo);
 
             stbi_image_free(texture_pixel_data);
     };
@@ -244,7 +250,9 @@ Skybox::Skybox()
     upload_face(front_id, textureData_skybox_front);
     upload_face(back_id, textureData_skybox_back);
 
-    texture.value().GenMipmaps();
+    texture.GenMipmaps();
+
+    return texture;
 }
 
 void GameObject::UpdateDraw()
