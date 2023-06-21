@@ -20,3 +20,7 @@ While Fwog comes with some [examples](https://github.com/JuanDiegoMontoya/Fwog/t
 - [x] Add multiple cubes for the example scene (which also shows depth testing)
 - [x] Refactor DrawObject class
 - (Maybe) Add Deccer's Cubes example that uses Fwog. If I do it would be a separate scene.
+
+## Skybox
+
+Skybox texture has [CC0 license](https://polyhaven.com/license) and is from [polyhaven](https://polyhaven.com/a/industrial_sunset_02).
