@@ -72,11 +72,11 @@ bool Application::Initialize()
 
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     const auto primaryMonitor = glfwGetPrimaryMonitor();
     const auto primaryMonitorVideoMode = glfwGetVideoMode(primaryMonitor);
