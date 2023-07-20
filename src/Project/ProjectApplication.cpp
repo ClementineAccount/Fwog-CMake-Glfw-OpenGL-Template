@@ -70,7 +70,7 @@ DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList, size_t in
     object.vertexBuffer.emplace(vertexList);
     object.indexBuffer.emplace(indexList);
     object.modelUniformBuffer =  Fwog::TypedBuffer<DrawObject::ObjectUniform>(Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
-    object.modelUniformBuffer.value().SubData(object.objectStruct, 0);
+    object.modelUniformBuffer.value().UpdateData(object.objectStruct, 0);
 
     //Fwog takes in uint32_t for the indexCount but .size() on a container returns size_t. I'll just cast it here and hope its fine.
     object.indexCount = static_cast<uint32_t>(indexCount);
@@ -88,11 +88,11 @@ void Camera::Update()
 
     cameraStruct.viewProj = proj * view;
     cameraStruct.eyePos = camPos;
-    cameraUniformsBuffer.value().SubData(cameraStruct, 0);
+    cameraUniformsBuffer.value().UpdateData(cameraStruct, 0);
 
     cameraStruct.viewProj = proj * viewSky;
 
-    cameraUniformsSkyboxBuffer.value().SubData(cameraStruct, 0);
+    cameraUniformsSkyboxBuffer.value().UpdateData(cameraStruct, 0);
 }
 
 Camera::Camera()
@@ -116,7 +116,7 @@ Camera::Camera()
     cameraUniformsSkyboxBuffer = Fwog::TypedBuffer<Camera::CameraUniforms>(
         Fwog::BufferStorageFlag::DYNAMIC_STORAGE);
 
-    cameraUniformsBuffer.value().SubData(cameraStruct, 0);
+    cameraUniformsBuffer.value().UpdateData(cameraStruct, 0);
 
     Update();
 }
@@ -230,15 +230,13 @@ Fwog::Texture Skybox::MakeTexture()
     auto upload_face = [&](uint32_t curr_face,
         unsigned char* texture_pixel_data) {
             Fwog::TextureUpdateInfo updateInfo{
-                .dimension = Fwog::UploadDimension::THREE,
-                .level = 0,
-                .offset = {.depth = curr_face},
-                .size = {static_cast<uint32_t>(textureWidth),
-                static_cast<uint32_t>(textureHeight), 1},
-                .format = Fwog::UploadFormat::RGBA,
-                .type = Fwog::UploadType::UBYTE,
-                .pixels = texture_pixel_data};
-            texture.SubImage(updateInfo);
+                    .offset = {.z = curr_face },
+                    .extent{static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight), 1},
+                    .format = Fwog::UploadFormat::RGBA,
+                    .type = Fwog::UploadType::UBYTE,
+                    .pixels = texture_pixel_data
+            };
+            texture.UpdateImage(updateInfo);
 
             stbi_image_free(texture_pixel_data);
     };
@@ -270,7 +268,7 @@ void GameObject::UpdateDraw()
     model = glm::rotate(model, glm::radians(eulerAngleDegrees.y), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, glm::radians(eulerAngleDegrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    drawData.modelUniformBuffer.value().SubData(drawData.objectStruct, 0);
+    drawData.modelUniformBuffer.value().UpdateData(drawData.objectStruct, 0);
 }
 
 Fwog::GraphicsPipeline ProjectApplication::MakePipeline(std::string_view vertexShaderPath, std::string_view fragmentShaderPath)
@@ -344,16 +342,13 @@ Fwog::Texture ProjectApplication::MakeTexture(std::string_view texturePath, int3
         divideByHalfAmounts);
 
     Fwog::TextureUpdateInfo updateInfo{
-        .dimension = Fwog::UploadDimension::TWO,
-        .level = 0,
-        .offset = {},
-        .size = {static_cast<uint32_t>(textureWidth),
+        .extent = {static_cast<uint32_t>(textureWidth),
         static_cast<uint32_t>(textureHeight), 1},
         .format = Fwog::UploadFormat::RGBA,
         .type = Fwog::UploadType::UBYTE,
         .pixels = textureData};
 
-    createdTexture.SubImage(updateInfo);
+    createdTexture.UpdateImage(updateInfo);
     createdTexture.GenMipmaps();
     stbi_image_free(textureData);
 
@@ -462,19 +457,6 @@ void ProjectApplication::Update(double dt)
 
 void ProjectApplication::RenderScene()
 {
-
-    static constexpr glm::vec4 backgroundColor = glm::vec4(0.1f, 0.3f, 0.2f, 1.0f);
-    Fwog::BeginSwapchainRendering(Fwog::SwapchainRenderInfo{
-        .viewport =
-        Fwog::Viewport{.drawRect{.offset = {0, 0},
-        .extent = {windowWidth, windowHeight}},
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f},
-        .colorLoadOp = Fwog::AttachmentLoadOp::CLEAR,
-        .clearColorValue = {backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a},
-        .depthLoadOp = Fwog::AttachmentLoadOp::CLEAR,
-        .clearDepthValue = 1.0f});
-
     Fwog::SamplerState ss;
     ss.minFilter = Fwog::Filter::LINEAR;
     ss.magFilter = Fwog::Filter::LINEAR;
@@ -497,10 +479,6 @@ void ProjectApplication::RenderScene()
         Fwog::Cmd::DrawIndexed(object.indexCount, 1, 0, 0, 0);
     };
 
-    for (size_t i = 0; i < numCubes; ++i)
-    {
-        drawObject(exampleCubes[i].drawData, cubeTexture.value(), nearestSampler, sceneCamera.value());
-    }
 
     auto drawSkybox = [&](Skybox const& skybox, Fwog::Sampler const& sampler, Camera const& camera)
     {
@@ -512,11 +490,33 @@ void ProjectApplication::RenderScene()
         Fwog::Cmd::Draw(Primitives::skyboxVertices.size() / 3, 1, 0, 0);
     };
 
-    if (_skyboxVisible)
-        drawSkybox(skybox.value(), nearestSampler, sceneCamera.value());
 
-    Fwog::EndRendering();
 
+
+    static constexpr glm::vec4 backgroundColor = glm::vec4(0.1f, 0.3f, 0.2f, 1.0f);
+    Fwog::RenderToSwapchain(
+        {
+        .viewport =
+        Fwog::Viewport{.drawRect{.offset = {0, 0},
+        .extent = {windowWidth, windowHeight}},
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f},
+        .colorLoadOp = Fwog::AttachmentLoadOp::CLEAR,
+        .clearColorValue = {backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a},
+        .depthLoadOp = Fwog::AttachmentLoadOp::CLEAR,
+        .clearDepthValue = 1.0f
+        },
+        [&]
+        {
+            for (size_t i = 0; i < numCubes; ++i)
+            {
+                drawObject(exampleCubes[i].drawData, cubeTexture.value(), nearestSampler, sceneCamera.value());
+            }
+
+            if (_skyboxVisible)
+                drawSkybox(skybox.value(), nearestSampler, sceneCamera.value());
+        }
+    );
 }
 
 void ProjectApplication::RenderUI(double dt)
