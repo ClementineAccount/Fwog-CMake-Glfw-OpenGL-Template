@@ -1,5 +1,3 @@
-#define CGLTF_IMPLEMENTATION
-#include <cgltf.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -24,33 +22,6 @@
 #include <set>
 
 static constexpr float PI = 3.1415926f;
-
-static std::string FindTexturePath(const std::filesystem::path& basePath, const cgltf_image* image)
-{
-    std::string texturePath;
-    if (!image->uri)
-    {
-        auto newPath = basePath / image->name;
-        if (!newPath.has_extension())
-        {
-            if (std::strcmp(image->mime_type, "image/png") == 0)
-            {
-                newPath.replace_extension("png");
-            }
-            else if (std::strcmp(image->mime_type, "image/jpg") == 0)
-            {
-                newPath.replace_extension("jpg");
-            }
-        }
-        texturePath = newPath.generic_string();
-    }
-    else
-    {
-        texturePath = (basePath / image->uri).generic_string();
-    }
-    return texturePath;
-}
-
 
 template <typename T1, typename T2>
 DrawObject DrawObject::Init(T1 const& vertexList, T2 const& indexList, size_t indexCount)
