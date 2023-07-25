@@ -131,7 +131,7 @@ Fwog::GraphicsPipeline Skybox::MakePipleine(std::string_view vertexShaderPath, s
     auto vertexShader = Fwog::Shader(Fwog::PipelineStage::VERTEX_SHADER, LoadFile(vertexShaderPath));
     auto fragmentShader = Fwog::Shader(Fwog::PipelineStage::FRAGMENT_SHADER, LoadFile(fragmentShaderPath));
 
-    static constexpr auto sceneInputBindingDescs =
+    auto sceneInputBindingDescs =
         std::array{Fwog::VertexInputBindingDescription{
         // position
         .location = 0,
