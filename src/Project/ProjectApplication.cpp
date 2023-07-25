@@ -25,18 +25,7 @@
 
 static constexpr float PI = 3.1415926f;
 
-static std::string Slurp(std::string_view path)
-{
-    std::ifstream file(path.data(), std::ios::ate);
-    std::string result(file.tellg(), '\0');
-    file.seekg(0);
-    file.read((char*)result.data(), result.size());
-    return result;
-}
-
-namespace fs = std::filesystem;
-
-static std::string FindTexturePath(const fs::path& basePath, const cgltf_image* image)
+static std::string FindTexturePath(const std::filesystem::path& basePath, const cgltf_image* image)
 {
     std::string texturePath;
     if (!image->uri)
@@ -531,56 +520,3 @@ void ProjectApplication::RenderUI(double dt)
 
     //ImGui::ShowDemoWindow();
 }
-
-
-
-
-//bool ProjectApplication::MakeShader(std::string_view vertexShaderFilePath, std::string_view fragmentShaderFilePath)
-//{
-//    int success = false;
-//    char log[1024] = {};
-//    const auto vertexShaderSource = Slurp(vertexShaderFilePath);
-//    const char* vertexShaderSourcePtr = vertexShaderSource.c_str();
-//    const auto vertexShader = glCreateShader(GL_VERTEX_SHADER);
-//    glShaderSource(vertexShader, 1, &vertexShaderSourcePtr, nullptr);
-//    glCompileShader(vertexShader);
-//    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-//    if (!success)
-//    {
-//        glGetShaderInfoLog(vertexShader, 1024, nullptr, log);
-//        spdlog::error(log);
-//        return false;
-//    }
-//
-//    const auto fragmentShaderSource = Slurp(fragmentShaderFilePath);
-//    const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
-//    const auto fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-//    glShaderSource(fragmentShader, 1, &fragmentShaderSourcePtr, nullptr);
-//    glCompileShader(fragmentShader);
-//    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-//    if (!success)
-//    {
-//        glGetShaderInfoLog(fragmentShader, 1024, nullptr, log);
-//        spdlog::error(log);
-//        return false;
-//    }
-//
-//    shaderProgram = glCreateProgram();
-//    glAttachShader(shaderProgram, vertexShader);
-//    glAttachShader(shaderProgram, fragmentShader);
-//    glLinkProgram(shaderProgram);
-//    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-//    if (!success)
-//    {
-//        glGetProgramInfoLog(shaderProgram, 1024, nullptr, log);
-//        spdlog::error(log);
-//
-//        return false;
-//    }
-//
-//    glDeleteShader(vertexShader);
-//    glDeleteShader(fragmentShader);
-//
-//    return true;
-//}
-//
